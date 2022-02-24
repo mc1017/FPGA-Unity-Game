@@ -4,13 +4,13 @@
 Create a 2D/3D multiplayer battleroyale game with maximum 6 players with Unity Game Engine in AWS. 
 
 **Langauge:**
-1. C++ for FPGA accelerometer 
+1. Python for FPGA accelerometer 
 2. Python for game dev
 
 **Gameplan:**
 1. Create 2D game
 2. Add gameplay functionalities 
-3. Build a 3D game based on the 2D Mechanics (Never done in previous years)
+3. Build multiple gamemodes to use all inputs from FPGA
 4. Write report and create video explaining gameplay and design process 
 
 **Collaboration Conventions**
