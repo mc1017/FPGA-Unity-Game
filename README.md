@@ -1,11 +1,14 @@
 # InfoProcCW
 
 **Objective:**
-Create a 2D/3D multiplayer battleroyale game with maximum 6 players with Unity Game Engine in AWS. 
+Create a real time remote multiplayer game that uses FPGA as an input and AWS
 
 **Langauge:**
-1. Python for FPGA accelerometer 
-2. Python for game dev
+1. C# for game development
+2. Python for server management 
+
+Video Link: 
+https://imperiallondon-my.sharepoint.com/:v:/g/personal/mc620_ic_ac_uk/ESUwiGZXywdEs02p68YBDPEBSvGz4cjECBFP_qcCZHzQjw?e=kaiPxR
 
 **Gameplan:**
 1. Create 2D game
@@ -13,88 +16,31 @@ Create a 2D/3D multiplayer battleroyale game with maximum 6 players with Unity G
 3. Build multiple gamemodes to use all inputs from FPGA
 4. Write report and create video explaining gameplay and design process 
 
-**Collaboration Conventions**
+Purpose of the System:
+We designed and implemented a real-time multiplayer game using the FPGAs as controllers. Using AWS servers, local FPGA processing and Unity infrastructure we created an exciting “Mario style” 2D co-operative game.
 
-1. Github Naming Convention:
+Game Description:
+A co-op real time multiplayer game was created on Unity using C#. It currently supports 2 players to play in real time on the same laptop, and it is also easily scalable. The game can be adjusted to spawn multiple players when there are more control nodes. The objective of the game is for the players to reach a treasure case at the end of the map. If any player fell off the map or died, all the players are sent back to the starting point; if any player finishes the map, all the players progress to the next level.
 
-Stable - stable - Accepts merges from Working and Hotfixes Working - master - Accepts merges from Features/Issues and Hotfixes
+We are currently replicating the experience of a console multiplayer game, which 2 players play a multiplayer game on the same screen with 1 PlayStation. The natural future development would be to replicate the PC gaming, which each player sits in front their own PC and have unique gameplay perspectives. Our server can be easily adjusted to support this functionality, but it takes some time to create a multiplayer game that displays different objects on various screens. 
 
-Features/Bug topic-* - Always branch off HEAD of Working Hotfix hotfix-* - Always branch off Stable
+Design decisions: using raw data instead of FIR filtered data:
+Initially, we tried to pass the accelerometer data through an FIR filter that we coded in C to process the data readings. We experimented generating different coefficients in MATLAB through using the designfilt() function and encoded the filter in the C script in Eclipse. However, to provide meaningful filtering we needed to use a large n-tap filter (50) which we found reduced the sampling rate below that of raw data processing increasing the lag between a player moving the board and the detection being communicated. As our game is dynamic (involves real-time player movement), fast input times are prudent. Consequently, to balance the sensitivity we tested how we physically move the board and implemented boundary conditions to detect input (i.e the game rejects minor movements of the board and accepts deliberate movements).
+Getting data from NIOS to Python:
+Once we obtained the accelerometer data in the NIOS terminal we needed to extract this into Python so it can be used by a client-side program. We utilised the subprocess module which allows us to spawn new processes and communicate with I/O streams in the NIOS terminal.
 
-If you are working on a new feature i.e. Solving inverse of conductance matrix, start a new branch named feature/solveconductancematrix
+Server side:
+The clients would first send an identification message to the server, declaring the client either to be an FPGA or a computer. The server then records the IP address and port number, along with what device it is, of the client that sends the message. Thus, even if the FPGA client and computer client share the same IP, the port number would differentiate between the processes. 
+The FPGA client constantly sends the accelerometer data to the server and the server constantly receives it. When it receives an update from a particular FPGA client, it will send it to the computer client with a header inserted declaring which FPGA it is from. 
+Some useful information about the connection status would also be printed in the terminal for monitoring and troubleshooting purposes. 
 
-Side note:
+Design decisions: using UDP instead of using TCP 
+Initially, we tried to use TCP for the server but it didn’t work. Since TCP is connection-oriented, the original logic was to use threading to take care of listening for new clients, receiving data from the FPGA client, and sending data to the computer client. However, in later stages of testing it was found that the TCP recv() function would fill up the buffer it was given and then output the data. This introduced a significant delay (~2 seconds) to receive and extract player control information. 
+The solution was to switch to UDP, which turned out to be very efficient and fits our demands very well. The message-based nature of the protocol allows the logic to be extremely simple, and storing the IP and port number of the clients avoids the need to use multicasting. 
 
-Head is a pointer that points to the latest commit of a branch. Always create a new branch of the HEAD of master when trying to add a new feature
 
-DO NOT use hotfix for non-urgent bugs. Hotfix is only used to fix bugs off the Stable version of program. Use branch (bug)
+Unity game Development:
+The game engine is a client node and receive data from the server. The data sent to the game engine is in the form of (P1/P2 X_Coordinates Y_Coordinates Z_Coordinates Button_Pressed). The data will then be parsed into a form that the game can take as an input. For example, if the data for x-coordinate sent to the game engine is 112<X_Coordinate<10000, then we know the player has tilted the FPGA to the left. Hence, the data will be parsed as horizontal =’-1’. The parsed data for all the controls will be written to a datafile playercontroltext1/2.txt (Figure 11). We wrote C# scripts to read datafiles at a rate of 60 Hz and change the movement of the player accordingly. This introduced a delay of approximately 20ms which is neglectable compared to the delay of the AWS server.
 
-If unsure of the convention, always refer to the link below! https://gist.github.com/digitaljhelms/4287848 (There are a lot of naming conventions out there. This is the one we are using for this project)
-
-2. Commit Messages convention:
-
-[optional scope]: etc. fix: solve inverse matrix which means the feature of solve inverse matrix has a bug and is fixed
-
-info - used for info and comments fix - used for bug fixes feat - used for feature hotfix - used for bug fixes off stable
-
-3. Some useful Git Commands:
-
-git fetch --prune (Delete merged branches in vscode, restart vscode after command)
-
-git status (List which files are staged, unstaged, and untracked.)
-
-git log (Shows commits history)
-
-Git commands cheatsheet: https://www.atlassian.com/git/tutorials/atlassian-git-cheatsheet
-
-**Official Specifications:**
-
-The minimum **functional requirements** for your system are:
-- Local processing of the accelerometer data.
-- Establishing a cloud server to process events/information
-- Communicating information from the node to the server.
-- Communicating information from the server back to the nodes in way that the local
-processing can be impacted.
-
-**Coursework deliverables**
-Your coursework deliverables consist of the following:
-1. A report (pdf) that describes your system, consisting of at most 5 A4 pages. The
-report should cover:
-  a. The purpose of your system.
-  b. The overall architecture of your system.
-  c. A description of the performance metrics of your system. Which metrics
-  should be used? Why?
-  d. At least one diagram of your system’s architecture.
-  e. Design decisions taken when implementing the system.
-  f. The approach taken to test your system.
-  g. At least one diagram or flow-chart describing your testing flow or approach.
-  h. Resources utilised for the DE10-Lite from Quartus
-2. Peer feedback: individual submission by each group member to provide peer
-  feedback on your team members, submitted via Microsoft Forms.
-3. Your design (Quartus – Hardware), and software for NIOS/host/server in a zip file
-  version 1.0
-4. (Optional) A short video (up to 5 min) where you can provide a description of your
-  project and demonstrate what you have done. This is not assessed, but it can provide
-  a nice advertisement of your work.
-  
-**Assessment**
-The coursework mark comes from the following components:
-1. Functionality (30%) : does your system work? This is assessed purely based on
-  whether the various parts of the system are functionally correct, and they meet
-  the minimum functional requirements described above.
-2. Testing (20%) : Is your testing complete? Have you considered testing all aspects
-  of the system?
-3. X-factor (20%) : This component aims to capture how challenging your system is
-  and the optimisations that you have applied/considered. For example, when it
-  comes to processing the data on the local node, this can be done with a direct
-  implementation of an FIR filter using floats, a more optimised approach would be
-  to consider performing the operations under a fixed-point representation, where
-  an even more optimised approach would be to have a hardware component that
-  performs the filtering. What are the trade-offs?
-4. Documentation (20%) : Are the architectural and testing approached adequately
-  described? Have the required components been covered? Does it provide useful
-  information specific to your solution? Does it highlight any clever or important
-  features/decisions?
-5. Oral examination (10%) : An opportunity to demonstrate and explain your project.
-6. Peer-feedback (+-5%) : allocated according to peer feed-back within the group.
-  This will affect the individual mark by up to 5% relative to the group mark.
+For a real-time multiplayer game to be played smoothly, minimising latency is a key factor. We have measured the amount of latency between FPGA movement and game player change using a stopwatch. The results below are the average results for 50 measurements. The maximum delay measured wass 923ms even when player reaction time was taken into account. We believe this is a very satisfactory average latency for a real time multiplayer game considering the server is in US Virginia. 
+After multiple individuals tested the game, the overall feedback suggested that latency did not affect gameplay.
