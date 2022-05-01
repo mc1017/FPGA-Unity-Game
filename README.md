@@ -10,6 +10,10 @@ Create a real time remote multiplayer game that uses FPGA as an input and AWS
 Video Link: 
 https://imperiallondon-my.sharepoint.com/:v:/g/personal/mc620_ic_ac_uk/ESUwiGZXywdEs02p68YBDPEBSvGz4cjECBFP_qcCZHzQjw?e=kaiPxR 
 
+Report Link:
+[InfoProc Report (1).pdf](https://github.com/mc1017/FPGA-Unity-Game/files/8598782/InfoProc.Report.1.pdf)
+
+
 **Purpose of the System:**
 We designed and implemented a real-time multiplayer game using the FPGAs as controllers. Using AWS servers, local FPGA processing and Unity infrastructure we created an exciting “Mario style” 2D co-operative game.
 
