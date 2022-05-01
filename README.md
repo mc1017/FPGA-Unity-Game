@@ -1,4 +1,4 @@
-# InfoProcCW
+# Real Time Multiplayer game with FPGA as controller
 
 **Objective:**
 Create a real time remote multiplayer game that uses FPGA as an input and AWS
